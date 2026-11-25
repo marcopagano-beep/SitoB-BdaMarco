@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestionale B&amp;B — Camere, Alloggiati, Black-List &amp; Feedback</title>
+  <style>
+    /* ==========================================================================
+       VARIABILI CSS & PALETTE (Hospitality & Chiarezza UI/UX)
+       ========================================================================== */
+    :root {
+      --bg-page: #f1f5f9;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-light: #e2e8f0;
+
+      /* Accenti semantici */
+      --primary: #0f766e;         /* Verde ottanio elegante (Hospitality) */
+      --primary-hover: #115e59;
+      --primary-soft: #ccfbf1;
+
+      --accent-blue: #2563eb;
+      --accent-blue-soft: #dbeafe;
+
+      --success: #15803d;
+      --success-soft: #dcfce7;
+
+      --warning: #b45309;
+      --warning-soft: #fef3c7;
+
+      --danger: #b91c1c;          /* Rosso per insolventi e Black-List */
+      --danger-hover: #991b1b;
+      --danger-soft: #fee2e2;
+
+      --star-gold: #f59e0b;
+
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07);
+      --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.08);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 18px;
+    }
+
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       HEADER & KPI RIEPILOGATIVI
+       ========================================================================== */
+    header {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 20px 26px;
+      box-shadow: var(--shadow-sm);
+      border-left: 6px solid var(--primary);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Griglia KPI in alto */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 1100px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 15px 18px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-info span {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .kpi-info strong {
+      display: block;
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    /* ==========================================================================
+       NAVIGAZIONE A TAB
+       ========================================================================== */
+    .tabs-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      background: var(--bg-card);
+      padding: 8px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+
+    .tab-btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .tab-btn.tab-blacklist.active {
+      background: var(--danger);
+      color: #ffffff;
+    }
+
+    .badge-count {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: rgba(15, 23, 42, 0.1);
+    }
+
+    .tab-btn.active .badge-count {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+      animation: fadeIn 0.22s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       LAYOUT DUE COLONNE PER LE SEZIONI OPERATIVE
+       ========================================================================== */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 1050px) {
+      .two-col-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       MODULI (FORM) E INPUT
+       ========================================================================== */
+    .form-group {
+      margin-bottom: 13px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 520px) {
+      .form-row, .form-row-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 4px;
+    }
+
+    label .req {
+      color: var(--danger);
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="date"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--text-main);
+      background: #ffffff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    }
+
+    /* Box riepilogo calcolo soggiorno + tassa di soggiorno */
+    .price-breakdown-box {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 0.86rem;
+    }
+
+    .breakdown-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      color: #475569;
+    }
+
+    .breakdown-total {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    /* Blocco Totale Blacklist durante la selezione ospite */
+    .blacklist-block-banner {
+      display: none;
+      background: var(--danger-soft);
+      border: 2px solid var(--danger);
+      border-left: 6px solid var(--danger);
+      color: #7f1d1d;
+      padding: 13px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+    }
+
+    .blacklist-block-banner.visible {
+      display: block;
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* Pulsanti */
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+
+    .btn-primary:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #ffffff;
+    }
+    .btn-danger:hover { background: var(--danger-hover); }
+
+    .btn-outline {
+      background: #ffffff;
+      color: #334155;
+      border: 1.5px solid #cbd5e1;
+    }
+    .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+    }
+
+    /* ==========================================================================
+       STATO CAMERE VISIVO & TABELLE
+       ========================================================================== */
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .rooms-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .room-card {
+      border: 1.5px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      background: #f8fafc;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .room-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .room-card.occupied {
+      background: #fffbeb;
+      border-color: #fcd34d;
+    }
+
+    .room-card.free {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .room-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .room-name {
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    .room-price {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Tabelle */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 11px 10px;
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    tr.row-blacklisted td {
+      background: #fef2f2;
+    }
+
+    /* Pillole di stato */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill-paid {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .pill-pending {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .pill-unpaid {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .pill-free {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .pill-occupied {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    /* ==========================================================================
+       SEZIONE FEEDBACK & RECENSIONI OSPITI
+       ========================================================================== */
+    .star-rating-picker {
+      display: flex;
+      gap: 6px;
+      font-size: 1.65rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .star-btn {
+      color: #cbd5e1;
+      transition: color 0.15s, transform 0.1s;
+    }
+
+    .star-btn.active {
+      color: var(--star-gold);
+    }
+
+    .star-btn:hover {
+      transform: scale(1.15);
+    }
+
+    .feedback-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .feedback-item {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      background: #f8fafc;
+    }
+
+    .feedback-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .feedback-author {
+      font-weight: 800;
+      font-size: 0.96rem;
+      color: #0f172a;
+    }
+
+    .feedback-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .feedback-stars {
+      color: var(--star-gold);
+      font-size: 1.05rem;
+      letter-spacing: 2px;
+    }
+
+    .feedback-comment {
+      font-size: 0.9rem;
+      color: #334155;
+      line-height: 1.5;
+    }
+
+    /* Barra di ricerca */
+    .search-box {
+      max-width: 280px;
+      padding: 8px 12px !important;
+      font-size: 0.85rem !important;
+    }
+
+    /* Toast Notifiche */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+      border-left: 5px solid var(--primary);
+      animation: slideIn 0.25s ease;
+    }
+
+    .toast.danger {
+      border-left-color: var(--danger);
+      background: #7f1d1d;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- INTESTAZIONE -->
+    <header>
+      <div>
+        <h1>🏡 Gestionale B&amp;B — 2 Camere (40 €/notte)</h1>
+        <p>Scheda Alloggiati completa, calcolo automatico tassa di soggiorno, blocco insolventi e area Feedback</p>
+      </div>
+      <div class="header-actions">
+        <button id="btnLoadDemo" class="btn btn-outline btn-sm" title="Ripristina dati di esempio">🔄 Ripristina Dati Demo</button>
+        <button id="btnClearAll" class="btn btn-outline btn-sm" title="Svuota tutto l'archivio">🗑️ Svuota Archivio</button>
+      </div>
+    </header>
+
+    <!-- KPI RIEPILOGATIVI -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span>Ospiti Registrati</span>
+          <strong id="kpiGuests">0</strong>
+        </div>
+        <div class="kpi-icon" style="background: var(--primary-soft); color: var(--primary);">👥</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span>Prenotazioni</span>
+          <strong id="kpiBookings">0</strong>
+        </div>
+        <div class="kpi-icon" style="background: var(--accent-blue-soft); color: var(--accent-blue);">🛏️</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span>Incasso Saldato</span>
+          <strong id="kpiRevenue">0 €</strong>
+        </div>
+        <div class="kpi-icon" style="background: var(--success-soft); color: var(--success);">💶</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span>Media Feedback</span>
+          <strong id="kpiRating">0.0 ★</strong>
+        </div>
+        <div class="kpi-icon" style="background: var(--warning-soft); color: var(--star-gold);">⭐</div>
+      </div>
+
+      <div class="kpi-card" style="border-color: #fecaca;">
+        <div class="kpi-info">
+          <span style="color: var(--danger);">Clienti Bloccati</span>
+          <strong id="kpiBlacklist" style="color: var(--danger);">0</strong>
+        </div>
+        <div class="kpi-icon" style="background: var(--danger-soft); color: var(--danger);">🚫</div>
+      </div>
+    </section>
+
+    <!-- NAVIGAZIONE A TAB -->
+    <nav class="tabs-bar" role="tablist">
+      <button class="tab-btn active" data-tab="tab-bookings">
+        📅 Prenotazioni Camere <span class="badge-count" id="badgeBookings">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-guests">
+        🪪 Anagrafica Alloggiati <span class="badge-count" id="badgeGuests">0</span>
+      </button>
+      <button class="tab-btn tab-blacklist" data-tab="tab-blacklist">
+        🚨 Black-List (Blocco) <span class="badge-count" id="badgeBlacklist">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-feedback">
+        ⭐ Feedback Ospiti <span class="badge-count" id="badgeFeedback">0</span>
+      </button>
+    </nav>
+
+    <!-- ========================================================================
+         TAB 1: GESTIONE PRENOTAZIONI CAMERE (2 Camere a 40€/notte + Tassa Soggiorno)
+         ======================================================================== -->
+    <section id="tab-bookings" class="tab-panel active">
+      <div class="two-col-grid">
+        <!-- Modulo Nuova Prenotazione -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">➕ Nuova Prenotazione Camera</h2>
+          </div>
+
+          <form id="bookingForm">
+            <div class="form-group">
+              <label for="bookingGuestSelect">Seleziona Ospite Registrato <span class="req">*</span></label>
+              <select id="bookingGuestSelect" required>
+                <option value="">-- Scegli un cliente --</option>
+              </select>
+            </div>
+
+            <!-- BLOCCO TOTALE se il cliente selezionato è in Black-List -->
+            <div id="bookingBlacklistBlock" class="blacklist-block-banner">
+              <strong>⛔ PRENOTAZIONE BLOCCATA — CLIENTE IN BLACK-LIST!</strong><br />
+              <span id="bookingBlacklistReasonText">Questo cliente ha un debito insoluto. Il sistema impedisce nuove prenotazioni finché il debito non viene saldato.</span>
+              <div style="margin-top: 10px;">
+                <button type="button" id="btnQuickSettleFromBooking" class="btn btn-danger btn-sm">
+                  💶 Registra Saldo Debito e Sblocca Cliente
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="bookingRoomSelect">Camera (Tariffa fissa 40 €/notte) <span class="req">*</span></label>
+              <select id="bookingRoomSelect" required>
+                <option value="Camera 1" data-price="40">Camera 1 — 40,00 € / notte</option>
+                <option value="Camera 2" data-price="40">Camera 2 — 40,00 € / notte</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bookingCheckIn">Check-in <span class="req">*</span></label>
+                <input type="date" id="bookingCheckIn" required />
+              </div>
+              <div class="form-group">
+                <label for="bookingCheckOut">Check-out <span class="req">*</span></label>
+                <input type="date" id="bookingCheckOut" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="bookingNumGuests">Numero Persone <span class="req">*</span></label>
+                <input type="number" id="bookingNumGuests" min="1" max="6" value="2" required />
+              </div>
+              <div class="form-group">
+                <label for="bookingTaxRate">Tassa Soggiorno (€/pers./notte) <span class="req">*</span></label>
+                <input type="number" id="bookingTaxRate" min="0" step="0.5" value="2.00" required />
+              </div>
+            </div>
+
+            <!-- Riepilogo Calcolo Automatico Camera + Tassa di Soggiorno -->
+            <div class="price-breakdown-box">
+              <div class="breakdown-line">
+                <span>Soggiorno (<strong id="calcNightsLabel">1</strong> notti × 40,00 €):</span>
+                <strong id="calcRoomSubtotal">40,00 €</strong>
+              </div>
+              <div class="breakdown-line">
+                <span>Tassa di soggiorno (<span id="calcTaxFormula">2 pers. × 1 notti × 2,00 €</span>):</span>
+                <strong id="calcTaxSubtotal">4,00 €</strong>
+              </div>
+              <div class="breakdown-total">
+                <span>Totale Complessivo:</span>
+                <span id="calcGrandTotal" style="color: var(--primary);">44,00 €</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="bookingPaymentStatus">Stato Pagamento <span class="req">*</span></label>
+              <select id="bookingPaymentStatus" required>
+                <option value="pagato">✅ Pagato (Saldato)</option>
+                <option value="in_attesa">⏳ Da saldare al Check-out</option>
+                <option value="non_pagato">🚨 NON PAGATO (Insolvente -> Black-List)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="bookingNotes">Note prenotazione</label>
+              <input type="text" id="bookingNotes" placeholder="Es. Orario arrivo previsto, richieste..." />
+            </div>
+
+            <button type="submit" id="btnSubmitBooking" class="btn btn-primary">Registra Prenotazione</button>
+          </form>
+        </div>
+
+        <!-- Colonna Destra: Stato delle 2 Camere & Registro Prenotazioni -->
+        <div>
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+              <h2 class="card-title">🏠 Stato delle 2 Camere (Oggi)</h2>
+              <span style="font-size: 0.82rem; color: var(--text-muted);" id="todayDateLabel"></span>
+            </div>
+            <div class="rooms-grid" id="roomsStatusGrid"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">📋 Registro Prenotazioni</h2>
+              <select id="filterBookingStatus" class="search-box" aria-label="Filtra prenotazioni">
+                <option value="all">Tutte le prenotazioni</option>
+                <option value="pagato">✅ Solo Pagate</option>
+                <option value="in_attesa">⏳ Da Saldare</option>
+                <option value="non_pagato">🚨 Non Pagate (Insolventi)</option>
+              </select>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ospite</th>
+                    <th>Camera &amp; Persone</th>
+                    <th>Date Soggiorno</th>
+                    <th>Dettaglio Costi</th>
+                    <th>Pagamento</th>
+                    <th>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody id="bookingsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         TAB 2: ANAGRAFICA ALLOGGIATI (Dati Personali & Documento)
+         ======================================================================== -->
+    <section id="tab-guests" class="tab-panel">
+      <div class="two-col-grid">
+        <!-- Modulo Registrazione Ospite Completo -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🪪 Registra Nuovo Ospite (Scheda Alloggiati)</h2>
+          </div>
+
+          <form id="guestForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="guestFirstName">Nome <span class="req">*</span></label>
+                <input type="text" id="guestFirstName" placeholder="Es. Marco" required />
+              </div>
+              <div class="form-group">
+                <label for="guestLastName">Cognome <span class="req">*</span></label>
+                <input type="text" id="guestLastName" placeholder="Es. Rossi" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="guestBirthDate">Data di Nascita <span class="req">*</span></label>
+                <input type="date" id="guestBirthDate" required />
+              </div>
+              <div class="form-group">
+                <label for="guestBirthPlace">Luogo di Nascita <span class="req">*</span></label>
+                <input type="text" id="guestBirthPlace" placeholder="Es. Torino (TO)" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="guestCitizenship">Cittadinanza <span class="req">*</span></label>
+              <input type="text" id="guestCitizenship" value="Italiana" placeholder="Es. Italiana, Francese..." required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="guestDocType">Tipologia Documento <span class="req">*</span></label>
+                <select id="guestDocType" required>
+                  <option value="Carta d'Identità">Carta d'Identità</option>
+                  <option value="Passaporto">Passaporto</option>
+                  <option value="Patente">Patente</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="guestDocNumber">Numero Documento <span class="req">*</span></label>
+                <input type="text" id="guestDocNumber" placeholder="Es. CA12345BB" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="guestPhone">Telefono <span class="req">*</span></label>
+                <input type="tel" id="guestPhone" placeholder="Es. +39 333 1234567" required />
+              </div>
+              <div class="form-group">
+                <label for="guestEmail">Email <span class="req">*</span></label>
+                <input type="email" id="guestEmail" placeholder="Es. marco.rossi@email.it" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="guestNotes">Note anagrafiche (opzionale)</label>
+              <input type="text" id="guestNotes" placeholder="Es. Cliente abituale, esigenze particolari..." />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salva Scheda Alloggiato</button>
+          </form>
+        </div>
+
+        <!-- Elenco Ospiti Registrati -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📖 Registro Anagrafico Ospiti</h2>
+            <input type="text" id="searchGuestInput" class="search-box" placeholder="🔍 Cerca nome, documento, cittadinanza, tel..." />
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ospite &amp; Nascita</th>
+                  <th>Cittadinanza</th>
+                  <th>Documento</th>
+                  <th>Contatti</th>
+                  <th>Stato</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="guestsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         TAB 3: BLACK-LIST CLIENTI CHE NON PAGANO (BLOCCO PRENOTAZIONI)
+         ======================================================================== -->
+    <section id="tab-blacklist" class="tab-panel">
+      <div class="two-col-grid">
+        <!-- Segnalazione Manuale in Black-List -->
+        <div class="card" style="border-top: 5px solid var(--danger);">
+          <div class="card-header">
+            <h2 class="card-title" style="color: var(--danger);">🚨 Segnala Cliente in Black-List</h2>
+          </div>
+
+          <p style="font-size: 0.87rem; color: var(--text-muted); margin-bottom: 14px;">
+            I clienti presenti in Black-List sono <strong>completamente bloccati</strong>: il sistema impedisce loro di effettuare nuove prenotazioni finché non viene registrato il saldo del debito.
+          </p>
+
+          <form id="blacklistManualForm">
+            <div class="form-group">
+              <label for="blacklistGuestSelect">Cliente da bloccare <span class="req">*</span></label>
+              <select id="blacklistGuestSelect" required>
+                <option value="">-- Seleziona ospite --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="blacklistDebtAmount">Importo debito insoluto (€) <span class="req">*</span></label>
+              <input type="number" id="blacklistDebtAmount" min="1" step="0.5" value="44" required />
+            </div>
+
+            <div class="form-group">
+              <label for="blacklistReason">Motivazione segnalazione <span class="req">*</span></label>
+              <textarea id="blacklistReason" rows="3" placeholder="Es. Partito senza saldare il soggiorno e la tassa di soggiorno..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-danger" style="width: 100%;">Blocca Cliente in Black-List</button>
+          </form>
+        </div>
+
+        <!-- Registro Black-List -->
+        <div class="card" style="border-top: 5px solid var(--danger);">
+          <div class="card-header">
+            <h2 class="card-title" style="color: var(--danger);">⛔ Clienti Bloccati per Insolvenza</h2>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Documento &amp; Contatti</th>
+                  <th>Debito Residuo</th>
+                  <th>Motivazione &amp; Data</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="blacklistTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         TAB 4: SEZIONE DEDICATA AI FEEDBACK DEGLI OSPITI
+         ======================================================================== -->
+    <section id="tab-feedback" class="tab-panel">
+      <div class="two-col-grid">
+        <!-- Form Nuovo Feedback -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">✍️ Lascia un Feedback sul Soggiorno</h2>
+          </div>
+
+          <form id="feedbackForm">
+            <div class="form-group">
+              <label for="feedbackGuestSelect">Ospite (opzionale, o inserisci nome sotto)</label>
+              <select id="feedbackGuestSelect">
+                <option value="">-- Ospite anonimo / esterno --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="feedbackAuthorName">Nome visualizzato <span class="req">*</span></label>
+              <input type="text" id="feedbackAuthorName" placeholder="Es. Elena Bianchi" required />
+            </div>
+
+            <div class="form-group">
+              <label for="feedbackRoom">Camera Soggiornata</label>
+              <select id="feedbackRoom">
+                <option value="Camera 1">Camera 1</option>
+                <option value="Camera 2">Camera 2</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Valutazione Complessiva <span class="req">*</span></label>
+              <div class="star-rating-picker" id="starRatingPicker" aria-label="Valutazione da 1 a 5 stelle">
+                <span class="star-btn active" data-val="1">★</span>
+                <span class="star-btn active" data-val="2">★</span>
+                <span class="star-btn active" data-val="3">★</span>
+                <span class="star-btn active" data-val="4">★</span>
+                <span class="star-btn active" data-val="5">★</span>
+              </div>
+              <input type="hidden" id="feedbackRatingValue" value="5" />
+            </div>
+
+            <div class="form-group">
+              <label for="feedbackComment">Recensione / Suggerimenti <span class="req">*</span></label>
+              <textarea id="feedbackComment" rows="4" placeholder="Racconta come ti sei trovato nella camera, pulizia, accoglienza, colazione..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Pubblica Feedback</button>
+          </form>
+        </div>
+
+        <!-- Bacheca Recensioni -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💬 Recensioni e Feedback degli Ospiti</h2>
+            <span id="feedbackSummaryBadge" class="pill pill-paid">Media: 5.0 ★</span>
+          </div>
+
+          <div class="feedback-list" id="feedbackListContainer"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Contenitore Notifiche Toast -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    /**
+     * ============================================================================
+     * CONFIGURAZIONE E PERSISTENZA DATI (LocalStorage)
+     * ============================================================================
+     */
+    const STORAGE_KEY = 'bnb_gestionale_2camere_v2';
+    const ROOM_NIGHTLY_PRICE = 40.0; // Tariffa fissa 40€ a notte
+
+    const ROOMS = [
+      { name: 'Camera 1', price: ROOM_NIGHTLY_PRICE },
+      { name: 'Camera 2', price: ROOM_NIGHTLY_PRICE }
+    ];
+
+    let appData = {
+      guests: [],
+      bookings: [],
+      feedbacks: []
+    };
+
+    function getOffsetDateStr(daysOffset = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + daysOffset);
+      return d.toISOString().split('T')[0];
+    }
+
+    function formatDateIT(isoDate) {
+      if (!isoDate) return '-';
+      const parts = isoDate.split('-');
+      if (parts.length !== 3) return isoDate;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function formatEuro(amount) {
+      return Number(amount || 0).toFixed(2).replace('.', ',') + ' €';
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showToast(message, isDanger = false) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${isDanger ? 'danger' : ''}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.25s';
+        setTimeout(() => toast.remove(), 260);
+      }, 3400);
+    }
+
+    function getDefaultDemoData() {
+      const today = getOffsetDateStr(0);
+      const inTwoDays = getOffsetDateStr(2);
+      const pastIn = getOffsetDateStr(-4);
+      const pastOut = getOffsetDateStr(-2);
+
+      return {
+        guests: [
+          {
+            id: 'g1',
+            firstName: 'Elena',
+            lastName: 'Bianchi',
+            birthDate: '1991-05-14',
+            birthPlace: 'Milano (MI)',
+            citizenship: 'Italiana',
+            docType: "Carta d'Identità",
+            docNumber: 'CA89412RM',
+            phone: '+39 347 8899112',
+            email: 'elena.bianchi@esempio.it',
+            notes: 'Ospite puntuale e cortese',
+            blacklisted: false,
+            blacklistReason: '',
+            blacklistAmount: 0,
+            blacklistDate: ''
+          },
+          {
+            id: 'g2',
+            firstName: 'Davide',
+            lastName: 'Neri',
+            birthDate: '1985-11-03',
+            birthPlace: 'Torino (TO)',
+            citizenship: 'Italiana',
+            docType: 'Patente',
+            docNumber: 'TO9928371A',
+            phone: '+39 388 9900123',
+            email: 'd.neri@esempio.it',
+            notes: 'Partito senza saldare il conto',
+            blacklisted: true,
+            blacklistReason: 'Soggiorno 2 notti + tassa soggiorno non pagati al check-out',
+            blacklistAmount: 88,
+            blacklistDate: pastOut
+          }
+        ],
+        bookings: [
+          {
+            id: 'b1',
+            guestId: 'g1',
+            room: 'Camera 1',
+            checkIn: today,
+            checkOut: inTwoDays,
+            nights: 2,
+            numGuests: 2,
+            taxRate: 2,
+            roomSubtotal: 80,
+            taxSubtotal: 8,
+            total: 88,
+            paymentStatus: 'pagato',
+            notes: 'Arrivo nel pomeriggio'
+          },
+          {
+            id: 'b2',
+            guestId: 'g2',
+            room: 'Camera 2',
+            checkIn: pastIn,
+            checkOut: pastOut,
+            nights: 2,
+            numGuests: 2,
+            taxRate: 2,
+            roomSubtotal: 80,
+            taxSubtotal: 8,
+            total: 88,
+            paymentStatus: 'non_pagato',
+            notes: 'Debito aperto da saldare'
+          }
+        ],
+        feedbacks: [
+          {
+            id: 'f1',
+            authorName: 'Elena Bianchi',
+            room: 'Camera 1',
+            rating: 5,
+            comment: 'Camera 1 pulitissima, accogliente e silenziosa. Ottimo rapporto qualità-prezzo a 40€ a notte!',
+            date: today
+          }
+        ]
+      };
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          appData = {
+            guests: parsed.guests || [],
+            bookings: parsed.bookings || [],
+            feedbacks: parsed.feedbacks || []
+          };
+          return;
+        } catch (e) {
+          console.error('Errore parsing localStorage:', e);
+        }
+      }
+      appData = getDefaultDemoData();
+      saveData();
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    /**
+     * ============================================================================
+     * NAVIGAZIONE A TAB
+     * ============================================================================
+     */
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-tab');
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+
+    /**
+     * ============================================================================
+     * CALCOLO AUTOMATICO CAMERA (40€/notte) + TASSA DI SOGGIORNO & BLOCCO BLACKLIST
+     * ============================================================================
+     */
+    const bookingRoomSelect = document.getElementById('bookingRoomSelect');
+    const bookingCheckIn = document.getElementById('bookingCheckIn');
+    const bookingCheckOut = document.getElementById('bookingCheckOut');
+    const bookingNumGuests = document.getElementById('bookingNumGuests');
+    const bookingTaxRate = document.getElementById('bookingTaxRate');
+    const bookingGuestSelect = document.getElementById('bookingGuestSelect');
+
+    const bookingBlacklistBlock = document.getElementById('bookingBlacklistBlock');
+    const bookingBlacklistReasonText = document.getElementById('bookingBlacklistReasonText');
+    const btnSubmitBooking = document.getElementById('btnSubmitBooking');
+
+    function getCalculatedBookingAmounts() {
+      const d1 = new Date(bookingCheckIn.value);
+      const d2 = new Date(bookingCheckOut.value);
+      let nights = 1;
+      if (!isNaN(d1) && !isNaN(d2) && d2 > d1) {
+        nights = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)));
+      }
+
+      const numGuests = Math.max(1, parseInt(bookingNumGuests.value, 10) || 1);
+      const taxRate = Math.max(0, parseFloat(bookingTaxRate.value) || 0);
+
+      const roomSubtotal = nights * ROOM_NIGHTLY_PRICE;
+      const taxSubtotal = numGuests * nights * taxRate;
+      const total = roomSubtotal + taxSubtotal;
+
+      return { nights, numGuests, taxRate, roomSubtotal, taxSubtotal, total };
+    }
+
+    function updateBookingCalculationUI() {
+      const calc = getCalculatedBookingAmounts();
+      document.getElementById('calcNightsLabel').textContent = calc.nights;
+      document.getElementById('calcRoomSubtotal').textContent = formatEuro(calc.roomSubtotal);
+      document.getElementById('calcTaxFormula').textContent = `${calc.numGuests} pers. × ${calc.nights} notti × ${formatEuro(calc.taxRate)}`;
+      document.getElementById('calcTaxSubtotal').textContent = formatEuro(calc.taxSubtotal);
+      document.getElementById('calcGrandTotal').textContent = formatEuro(calc.total);
+    }
+
+    bookingCheckIn.addEventListener('change', updateBookingCalculationUI);
+    bookingCheckOut.addEventListener('change', updateBookingCalculationUI);
+    bookingNumGuests.addEventListener('input', updateBookingCalculationUI);
+    bookingTaxRate.addEventListener('input', updateBookingCalculationUI);
+
+    function checkSelectedGuestBlacklistLock() {
+      const guestId = bookingGuestSelect.value;
+      const guest = appData.guests.find(g => g.id === guestId);
+
+      if (guest && guest.blacklisted) {
+        bookingBlacklistReasonText.textContent = `Debito insoluto di ${formatEuro(guest.blacklistAmount)} — Motivo: "${guest.blacklistReason}". Il sistema blocca nuove prenotazioni fino al saldo.`;
+        bookingBlacklistBlock.classList.add('visible');
+        btnSubmitBooking.disabled = true;
+        btnSubmitBooking.textContent = '⛔ Prenotazione Bloccata (Saldare Debito)';
+      } else {
+        bookingBlacklistBlock.classList.remove('visible');
+        btnSubmitBooking.disabled = false;
+        btnSubmitBooking.textContent = 'Registra Prenotazione';
+      }
+    }
+
+    bookingGuestSelect.addEventListener('change', checkSelectedGuestBlacklistLock);
+
+    document.getElementById('btnQuickSettleFromBooking').addEventListener('click', () => {
+      const guestId = bookingGuestSelect.value;
+      if (!guestId) return;
+      settleGuestDebt(guestId);
+    });
+
+    function isRoomAvailable(roomName, checkIn, checkOut) {
+      return !appData.bookings.some(b => {
+        if (b.room !== roomName) return false;
+        return checkIn < b.checkOut && checkOut > b.checkIn;
+      });
+    }
+
+    /**
+     * ============================================================================
+     * RENDERING COMPLETO DELL'INTERFACCIA
+     * ============================================================================
+     */
+    function renderAll() {
+      renderKPIs();
+      renderGuestSelects();
+      renderRoomsStatus();
+      renderBookingsTable();
+      renderGuestsTable();
+      renderBlacklistTable();
+      renderFeedbackList();
+      checkSelectedGuestBlacklistLock();
+    }
+
+    function renderKPIs() {
+      const totalGuests = appData.guests.length;
+      const totalBookings = appData.bookings.length;
+      const totalRevenue = appData.bookings
+        .filter(b => b.paymentStatus === 'pagato')
+        .reduce((acc, b) => acc + Number(b.total || 0), 0);
+      const blacklistedCount = appData.guests.filter(g => g.blacklisted).length;
+
+      const avgRating = appData.feedbacks.length > 0
+        ? (appData.feedbacks.reduce((s, f) => s + Number(f.rating), 0) / appData.feedbacks.length).toFixed(1)
+        : '0.0';
+
+      document.getElementById('kpiGuests').textContent = totalGuests;
+      document.getElementById('kpiBookings').textContent = totalBookings;
+      document.getElementById('kpiRevenue').textContent = formatEuro(totalRevenue);
+      document.getElementById('kpiRating').textContent = `${avgRating} ★`;
+      document.getElementById('kpiBlacklist').textContent = blacklistedCount;
+
+      document.getElementById('badgeGuests').textContent = totalGuests;
+      document.getElementById('badgeBookings').textContent = totalBookings;
+      document.getElementById('badgeBlacklist').textContent = blacklistedCount;
+      document.getElementById('badgeFeedback').textContent = appData.feedbacks.length;
+    }
+
+    function renderGuestSelects() {
+      const currentBookingVal = bookingGuestSelect.value;
+      const blacklistSelect = document.getElementById('blacklistGuestSelect');
+      const feedbackGuestSelect = document.getElementById('feedbackGuestSelect');
+
+      const currentBlVal = blacklistSelect.value;
+      const currentFbVal = feedbackGuestSelect.value;
+
+      bookingGuestSelect.innerHTML = '<option value="">-- Scegli un cliente --</option>';
+      blacklistSelect.innerHTML = '<option value="">-- Seleziona ospite --</option>';
+      feedbackGuestSelect.innerHTML = '<option value="">-- Ospite anonimo / esterno --</option>';
+
+      appData.guests.forEach(g => {
+        const label = `${g.lastName} ${g.firstName} (${g.docType}: ${g.docNumber})${g.blacklisted ? ' ⛔ [BLOCCATO - BLACK-LIST]' : ''}`;
+        const opt1 = document.createElement('option');
+        opt1.value = g.id;
+        opt1.textContent = label;
+        bookingGuestSelect.appendChild(opt1);
+
+        if (!g.blacklisted) {
+          const opt2 = document.createElement('option');
+          opt2.value = g.id;
+          opt2.textContent = `${g.lastName} ${g.firstName} — ${g.docType} ${g.docNumber}`;
+          blacklistSelect.appendChild(opt2);
+        }
+
+        const opt3 = document.createElement('option');
+        opt3.value = g.id;
+        opt3.textContent = `${g.firstName} ${g.lastName}`;
+        feedbackGuestSelect.appendChild(opt3);
+      });
+
+      bookingGuestSelect.value = currentBookingVal;
+      blacklistSelect.value = currentBlVal;
+      feedbackGuestSelect.value = currentFbVal;
+    }
+
+    function renderRoomsStatus() {
+      const today = getOffsetDateStr(0);
+      document.getElementById('todayDateLabel').textContent = `Data odierna: ${formatDateIT(today)}`;
+
+      const grid = document.getElementById('roomsStatusGrid');
+      grid.innerHTML = '';
+
+      ROOMS.forEach(room => {
+        const activeBooking = appData.bookings.find(b =>
+          b.room === room.name && b.checkIn <= today && b.checkOut > today
+        );
+
+        const card = document.createElement('div');
+        card.className = `room-card ${activeBooking ? 'occupied' : 'free'}`;
+
+        if (activeBooking) {
+          const guest = appData.guests.find(g => g.id === activeBooking.guestId);
+          const guestName = guest ? `${guest.firstName} ${guest.lastName}` : 'Ospite';
+          card.innerHTML = `
+            <div class="room-top">
+              <span class="room-name">${escapeHTML(room.name)}</span>
+              <span class="pill pill-occupied">🔒 Occupata</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #334155;">
+              <strong>Ospite:</strong> ${escapeHTML(guestName)} (${activeBooking.numGuests || 1} pers.)<br/>
+              <strong>Check-out:</strong> ${formatDateIT(activeBooking.checkOut)}
+            </div>
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="room-top">
+              <span class="room-name">${escapeHTML(room.name)}</span>
+              <span class="pill pill-free">✅ Libera</span>
+            </div>
+            <div class="room-price">Tariffa: 40,00 € / notte + tassa soggiorno</div>
+          `;
+        }
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderBookingsTable() {
+      const tbody = document.getElementById('bookingsTableBody');
+      const filterStatus = document.getElementById('filterBookingStatus').value;
+
+      const filtered = appData.bookings.filter(b =>
+        filterStatus === 'all' ? true : b.paymentStatus === filterStatus
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Nessuna prenotazione trovata per il filtro selezionato.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      [...filtered].reverse().forEach(b => {
+        const guest = appData.guests.find(g => g.id === b.guestId);
+        const guestName = guest ? `${guest.firstName} ${guest.lastName}` : 'Ospite rimosso';
+        const isBlacklisted = guest && guest.blacklisted;
+
+        let pillHTML = '';
+        if (b.paymentStatus === 'pagato') {
+          pillHTML = `<span class="pill pill-paid">✅ Pagato</span>`;
+        } else if (b.paymentStatus === 'in_attesa') {
+          pillHTML = `<span class="pill pill-pending">⏳ Da Saldare</span>`;
+        } else {
+          pillHTML = `<span class="pill pill-unpaid">🚨 NON PAGATO</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        if (b.paymentStatus === 'non_pagato' || isBlacklisted) {
+          tr.classList.add('row-blacklisted');
+        }
+
+        const roomSub = b.roomSubtotal !== undefined ? b.roomSubtotal : b.total;
+        const taxSub = b.taxSubtotal !== undefined ? b.taxSubtotal : 0;
+
+        tr.innerHTML = `
+          <td>
+            <strong>${escapeHTML(guestName)}</strong>
+            ${isBlacklisted ? '<br/><span style="color: var(--danger); font-size: 0.72rem; font-weight: 800;">⛔ CLIENTE BLOCCATO</span>' : ''}
+            ${b.notes ? `<br/><span style="color: var(--text-muted); font-size: 0.75rem;">${escapeHTML(b.notes)}</span>` : ''}
+          </td>
+          <td>
+            <strong>${escapeHTML(b.room)}</strong><br/>
+            <span style="font-size: 0.76rem; color: var(--text-muted);">${b.numGuests || 1} ospiti • ${b.nights || 1} notti</span>
+          </td>
+          <td>
+            ${formatDateIT(b.checkIn)} → ${formatDateIT(b.checkOut)}
+          </td>
+          <td>
+            <strong>${formatEuro(b.total)}</strong><br/>
+            <span style="font-size: 0.74rem; color: var(--text-muted);">Cam: ${formatEuro(roomSub)} + Tassa: ${formatEuro(taxSub)}</span>
+          </td>
+          <td>${pillHTML}</td>
+          <td>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+              ${b.paymentStatus !== 'pagato' ? `<button class="btn btn-outline btn-sm" onclick="markBookingPaid('${b.id}')" title="Registra pagamento">💶 Salda</button>` : ''}
+              ${b.paymentStatus !== 'non_pagato' ? `<button class="btn btn-danger btn-sm" onclick="markBookingUnpaid('${b.id}')" title="Segnala insolvenza e blocca cliente">🚨 Non Pagato</button>` : ''}
+              <button class="btn btn-outline btn-sm" onclick="deleteBooking('${b.id}')" title="Elimina prenotazione">🗑️</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderGuestsTable() {
+      const tbody = document.getElementById('guestsTableBody');
+      const query = document.getElementById('searchGuestInput').value.trim().toLowerCase();
+
+      const filtered = appData.guests.filter(g => {
+        const full = `${g.firstName} ${g.lastName} ${g.birthPlace} ${g.citizenship} ${g.docType} ${g.docNumber} ${g.phone} ${g.email}`.toLowerCase();
+        return full.includes(query);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Nessun ospite trovato. Registra un nuovo cliente dal modulo a sinistra.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      [...filtered].reverse().forEach(g => {
+        const tr = document.createElement('tr');
+        if (g.blacklisted) tr.classList.add('row-blacklisted');
+
+        tr.innerHTML = `
+          <td>
+            <strong>${escapeHTML(g.firstName)} ${escapeHTML(g.lastName)}</strong><br/>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Nato/a il ${formatDateIT(g.birthDate)} a ${escapeHTML(g.birthPlace || '-')}</span>
+          </td>
+          <td>${escapeHTML(g.citizenship || '-')}</td>
+          <td>
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">${escapeHTML(g.docType || 'Doc')}</span><br/>
+            <code>${escapeHTML(g.docNumber)}</code>
+          </td>
+          <td>
+            <div style="font-size: 0.8rem;">📞 ${escapeHTML(g.phone)}</div>
+            <div style="font-size: 0.8rem;">✉️ ${escapeHTML(g.email)}</div>
+          </td>
+          <td>
+            ${g.blacklisted
+              ? '<span class="pill pill-unpaid">⛔ Bloccato</span>'
+              : '<span class="pill pill-paid">✅ Regolare</span>'}
+          </td>
+          <td>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+              ${!g.blacklisted
+                ? `<button class="btn btn-danger btn-sm" onclick="quickBlacklistGuest('${g.id}')" title="Blocca in Black-List">🚨 Blocca</button>`
+                : `<button class="btn btn-outline btn-sm" onclick="settleGuestDebt('${g.id}')" title="Salda debito e sblocca">💶 Salda e Sblocca</button>`}
+              <button class="btn btn-outline btn-sm" onclick="deleteGuest('${g.id}')" title="Elimina ospite">🗑️</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderBlacklistTable() {
+      const tbody = document.getElementById('blacklistTableBody');
+      const blacklistedGuests = appData.guests.filter(g => g.blacklisted);
+
+      if (blacklistedGuests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">🎉 Nessun cliente bloccato in Black-List al momento.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      blacklistedGuests.forEach(g => {
+        const tr = document.createElement('tr');
+        tr.classList.add('row-blacklisted');
+
+        tr.innerHTML = `
+          <td>
+            <strong style="color: var(--danger);">${escapeHTML(g.firstName)} ${escapeHTML(g.lastName)}</strong><br/>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(g.citizenship || '')} • Nato il ${formatDateIT(g.birthDate)}</span>
+          </td>
+          <td>
+            <div><strong>${escapeHTML(g.docType || 'Doc')}:</strong> ${escapeHTML(g.docNumber)}</div>
+            <div style="font-size: 0.78rem;">📞 ${escapeHTML(g.phone)} | ✉️ ${escapeHTML(g.email)}</div>
+          </td>
+          <td>
+            <strong style="color: var(--danger); font-size: 1rem;">${formatEuro(g.blacklistAmount)}</strong>
+          </td>
+          <td>
+            <div>${escapeHTML(g.blacklistReason || 'Mancato pagamento')}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Segnalato il: ${formatDateIT(g.blacklistDate)}</div>
+          </td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="settleGuestDebt('${g.id}')">💶 Registra Saldo &amp; Sblocca</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderFeedbackList() {
+      const container = document.getElementById('feedbackListContainer');
+      const badge = document.getElementById('feedbackSummaryBadge');
+
+      if (appData.feedbacks.length === 0) {
+        badge.textContent = 'Nessun feedback';
+        container.innerHTML = `<div class="empty-state">Ancora nessuna recensione inserita. Compila il modulo a sinistra per aggiungere il primo feedback!</div>`;
+        return;
+      }
+
+      const avg = (appData.feedbacks.reduce((s, f) => s + Number(f.rating), 0) / appData.feedbacks.length).toFixed(1);
+      badge.textContent = `Media: ${avg} ★ (${appData.feedbacks.length} recensioni)`;
+
+      container.innerHTML = '';
+      [...appData.feedbacks].reverse().forEach(f => {
+        const starsStr = '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
+        const item = document.createElement('div');
+        item.className = 'feedback-item';
+        item.innerHTML = `
+          <div class="feedback-header">
+            <div>
+              <div class="feedback-author">${escapeHTML(f.authorName)}</div>
+              <div class="feedback-meta">Soggiorno in <strong>${escapeHTML(f.room)}</strong> • ${formatDateIT(f.date)}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="feedback-stars">${starsStr}</span>
+              <button class="btn btn-outline btn-sm" onclick="deleteFeedback('${f.id}')" title="Elimina feedback">🗑️</button>
+            </div>
+          </div>
+          <p class="feedback-comment">${escapeHTML(f.comment)}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    /**
+     * ============================================================================
+     * AZIONI UTENTE & EVENT HANDLERS
+     * ============================================================================
+     */
+    // 1. Registrazione nuovo ospite (Scheda Alloggiati)
+    document.getElementById('guestForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const firstName = document.getElementById('guestFirstName').value.trim();
+      const lastName = document.getElementById('guestLastName').value.trim();
+      const birthDate = document.getElementById('guestBirthDate').value;
+      const birthPlace = document.getElementById('guestBirthPlace').value.trim();
+      const citizenship = document.getElementById('guestCitizenship').value.trim();
+      const docType = document.getElementById('guestDocType').value;
+      const docNumber = document.getElementById('guestDocNumber').value.trim().toUpperCase();
+      const phone = document.getElementById('guestPhone').value.trim();
+      const email = document.getElementById('guestEmail').value.trim();
+      const notes = document.getElementById('guestNotes').value.trim();
+
+      const newGuest = {
+        id: 'g_' + Date.now(),
+        firstName,
+        lastName,
+        birthDate,
+        birthPlace,
+        citizenship,
+        docType,
+        docNumber,
+        phone,
+        email,
+        notes,
+        blacklisted: false,
+        blacklistReason: '',
+        blacklistAmount: 0,
+        blacklistDate: ''
+      };
+
+      appData.guests.push(newGuest);
+      saveData();
+      renderAll();
+
+      e.target.reset();
+      document.getElementById('guestCitizenship').value = 'Italiana';
+      bookingGuestSelect.value = newGuest.id;
+      checkSelectedGuestBlacklistLock();
+      showToast(`Scheda Alloggiato di ${firstName} ${lastName} salvata!`);
+    });
+
+    // 2. Registrazione nuova prenotazione con blocco rigoroso su Black-List
+    document.getElementById('bookingForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const guestId = bookingGuestSelect.value;
+      const room = bookingRoomSelect.value;
+      const checkIn = bookingCheckIn.value;
+      const checkOut = bookingCheckOut.value;
+      const paymentStatus = document.getElementById('bookingPaymentStatus').value;
+      const notes = document.getElementById('bookingNotes').value.trim();
+
+      if (!guestId) {
+        showToast('Seleziona un ospite registrato prima di procedere.', true);
+        return;
+      }
+
+      const guest = appData.guests.find(g => g.id === guestId);
+      if (guest && guest.blacklisted) {
+        showToast('⛔ BLOCCO ATTIVO: Impossibile prenotare finché il cliente non salda il debito!', true);
+        return;
+      }
+
+      if (checkOut <= checkIn) {
+        showToast('La data di Check-out deve essere successiva al Check-in.', true);
+        return;
+      }
+
+      if (!isRoomAvailable(room, checkIn, checkOut)) {
+        showToast(`La ${room} è già occupata nelle date selezionate!`, true);
+        return;
+      }
+
+      const calc = getCalculatedBookingAmounts();
+
+      const newBooking = {
+        id: 'b_' + Date.now(),
+        guestId,
+        room,
+        checkIn,
+        checkOut,
+        nights: calc.nights,
+        numGuests: calc.numGuests,
+        taxRate: calc.taxRate,
+        roomSubtotal: calc.roomSubtotal,
+        taxSubtotal: calc.taxSubtotal,
+        total: calc.total,
+        paymentStatus,
+        notes
+      };
+
+      appData.bookings.push(newBooking);
+
+      if (paymentStatus === 'non_pagato' && guest) {
+        guest.blacklisted = true;
+        guest.blacklistAmount = (Number(guest.blacklistAmount) || 0) + calc.total;
+        guest.blacklistReason = `Mancato pagamento ${room} (${formatDateIT(checkIn)} - ${formatDateIT(checkOut)})`;
+        guest.blacklistDate = getOffsetDateStr(0);
+        showToast(`🚨 ${guest.firstName} ${guest.lastName} inserito in BLACK-LIST e bloccato per future prenotazioni!`, true);
+      } else {
+        showToast(`Prenotazione ${room} registrata (${formatEuro(calc.total)})!`);
+      }
+
+      saveData();
+      renderAll();
+      document.getElementById('bookingNotes').value = '';
+    });
+
+    // 3. Segnalazione manuale in Black-List
+    document.getElementById('blacklistManualForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const guestId = document.getElementById('blacklistGuestSelect').value;
+      const amount = parseFloat(document.getElementById('blacklistDebtAmount').value) || 0;
+      const reason = document.getElementById('blacklistReason').value.trim();
+
+      const guest = appData.guests.find(g => g.id === guestId);
+      if (!guest) return;
+
+      guest.blacklisted = true;
+      guest.blacklistAmount = (Number(guest.blacklistAmount) || 0) + amount;
+      guest.blacklistReason = reason;
+      guest.blacklistDate = getOffsetDateStr(0);
+
+      saveData();
+      renderAll();
+      e.target.reset();
+      showToast(`⛔ ${guest.firstName} ${guest.lastName} bloccato in Black-List!`, true);
+    });
+
+    // 4. Gestione Stelle e Form Feedback
+    const starButtons = document.querySelectorAll('.star-btn');
+    const feedbackRatingValue = document.getElementById('feedbackRatingValue');
+    const feedbackGuestSelect = document.getElementById('feedbackGuestSelect');
+    const feedbackAuthorName = document.getElementById('feedbackAuthorName');
+
+    starButtons.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = parseInt(star.getAttribute('data-val'), 10);
+        feedbackRatingValue.value = val;
+        starButtons.forEach(s => {
+          s.classList.toggle('active', parseInt(s.getAttribute('data-val'), 10) <= val);
+        });
+      });
+    });
+
+    feedbackGuestSelect.addEventListener('change', () => {
+      const g = appData.guests.find(item => item.id === feedbackGuestSelect.value);
+      if (g) {
+        feedbackAuthorName.value = `${g.firstName} ${g.lastName}`;
+      }
+    });
+
+    document.getElementById('feedbackForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const authorName = feedbackAuthorName.value.trim();
+      const room = document.getElementById('feedbackRoom').value;
+      const rating = parseInt(feedbackRatingValue.value, 10) || 5;
+      const comment = document.getElementById('feedbackComment').value.trim();
+
+      appData.feedbacks.push({
+        id: 'f_' + Date.now(),
+        authorName,
+        room,
+        rating,
+        comment,
+        date: getOffsetDateStr(0)
+      });
+
+      saveData();
+      renderAll();
+      e.target.reset();
+      feedbackRatingValue.value = 5;
+      starButtons.forEach(s => s.classList.add('active'));
+      showToast('⭐ Feedback pubblicato con successo!');
+    });
+
+    // Azioni rapide nelle tabelle
+    window.markBookingPaid = function(bookingId) {
+      const b = appData.bookings.find(item => item.id === bookingId);
+      if (!b) return;
+      b.paymentStatus = 'pagato';
+      saveData();
+      renderAll();
+      showToast('Pagamento registrato come saldato!');
+    };
+
+    window.markBookingUnpaid = function(bookingId) {
+      const b = appData.bookings.find(item => item.id === bookingId);
+      if (!b) return;
+      b.paymentStatus = 'non_pagato';
+
+      const guest = appData.guests.find(g => g.id === b.guestId);
+      if (guest) {
+        guest.blacklisted = true;
+        guest.blacklistAmount = (Number(guest.blacklistAmount) || 0) + Number(b.total || 0);
+        guest.blacklistReason = `Mancato pagamento ${b.room} (${formatDateIT(b.checkIn)} → ${formatDateIT(b.checkOut)})`;
+        guest.blacklistDate = getOffsetDateStr(0);
+        showToast(`⛔ ${guest.firstName} ${guest.lastName} inserito in Black-List e bloccato!`, true);
+      }
+
+      saveData();
+      renderAll();
+    };
+
+    window.deleteBooking = function(bookingId) {
+      appData.bookings = appData.bookings.filter(b => b.id !== bookingId);
+      saveData();
+      renderAll();
+      showToast('Prenotazione eliminata.');
+    };
+
+    window.quickBlacklistGuest = function(guestId) {
+      const guest = appData.guests.find(g => g.id === guestId);
+      if (!guest) return;
+      guest.blacklisted = true;
+      guest.blacklistAmount = guest.blacklistAmount || 44;
+      guest.blacklistReason = guest.blacklistReason || 'Bloccato manualmente per mancato pagamento';
+      guest.blacklistDate = getOffsetDateStr(0);
+      saveData();
+      renderAll();
+      showToast(`⛔ ${guest.firstName} ${guest.lastName} bloccato in Black-List!`, true);
+    };
+
+    window.settleGuestDebt = function(guestId) {
+      const guest = appData.guests.find(g => g.id === guestId);
+      if (!guest) return;
+
+      guest.blacklisted = false;
+      guest.blacklistAmount = 0;
+      guest.blacklistReason = '';
+
+      appData.bookings.forEach(b => {
+        if (b.guestId === guestId && b.paymentStatus === 'non_pagato') {
+          b.paymentStatus = 'pagato';
+        }
+      });
+
+      saveData();
+      renderAll();
+      showToast(`✅ Debito saldato! ${guest.firstName} ${guest.lastName} è stato sbloccato e può prenotare.`);
+    };
+
+    window.deleteGuest = function(guestId) {
+      const hasBookings = appData.bookings.some(b => b.guestId === guestId);
+      if (hasBookings) {
+        showToast('Impossibile eliminare: esistono prenotazioni associate a questo ospite.', true);
+        return;
+      }
+      appData.guests = appData.guests.filter(g => g.id !== guestId);
+      saveData();
+      renderAll();
+      showToast('Scheda ospite eliminata.');
+    };
+
+    window.deleteFeedback = function(feedbackId) {
+      appData.feedbacks = appData.feedbacks.filter(f => f.id !== feedbackId);
+      saveData();
+      renderAll();
+      showToast('Feedback eliminato.');
+    };
+
+    // Filtri e ricerca
+    document.getElementById('searchGuestInput').addEventListener('input', renderGuestsTable);
+    document.getElementById('filterBookingStatus').addEventListener('change', renderBookingsTable);
+
+    // Demo / Reset
+    document.getElementById('btnLoadDemo').addEventListener('click', () => {
+      appData = getDefaultDemoData();
+      saveData();
+      renderAll();
+      showToast('Dati dimostrativi ripristinati.');
+    });
+
+    document.getElementById('btnClearAll').addEventListener('click', () => {
+      appData = { guests: [], bookings: [], feedbacks: [] };
+      saveData();
+      renderAll();
+      showToast('Archivio svuotato.');
+    });
+
+    // Inizializzazione
+    bookingCheckIn.value = getOffsetDateStr(0);
+    bookingCheckOut.value = getOffsetDateStr(1);
+
+    loadData();
+    updateBookingCalculationUI();
+    renderAll();
+  </script>
+</body>
+</html>
